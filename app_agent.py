@@ -1,4 +1,4 @@
-# app_rag_agent.py  —  Agent版（Function Calling + RAG 双工具）
+# app_agent.py  —  Agent版（Function Calling + RAG 双工具）
 import os
 import json
 from langchain_community.document_loaders import PyPDFLoader
@@ -12,6 +12,18 @@ from dotenv import load_dotenv
 # ========== 基础配置 ==========
 load_dotenv()
 My_Key = os.getenv("SILICONFLOW_KEY")
+
+# 启动时校验 Key 是否加载成功
+if not My_Key:
+    raise RuntimeError(
+        "SILICONFLOW_KEY 未设置！请检查：\n"
+        "1. 项目根目录是否有 .env 文件\n"
+        "2. .env 文件中是否写入了 SILICONFLOW_KEY=your-key-here\n"
+        "3. 如果使用 Docker，请确保通过 --env-file .env 注入变量"
+    )
+
+# Chroma 向量库持久化目录
+PERSIST_DIR = "./chroma"
 
 # 嵌入模型
 embeddings = OpenAIEmbeddings(
@@ -127,7 +139,9 @@ def init_rag_system():
     chunks = text_splitter.split_documents(documents)
 
     vectorstore = Chroma.from_documents(
-        documents=chunks, embedding=embeddings
+        documents=chunks,
+        embedding=embeddings,
+        persist_directory=PERSIST_DIR,
     )
     retriever_instance = vectorstore.as_retriever(
         search_kwargs={"k": 5}
@@ -240,10 +254,14 @@ with st.sidebar:
     st.write("基于 LangChain + Chroma 搭建的工业设备维修 Agent 助手")
     st.write("支持 Function Calling 工具调用")
     st.write("开发者：所以然")
-    st.write("当前版本：v2.0 (Agent版)")
+    st.write("当前版本：v2.0（Agent版 · 支持工具调用 + 实时状态查询）")
 
 # 标题
-st.title("设备维修专家AI（Agent版）")
+st.title("设备维修智能助手 DeviceMate")
+
+# 初始化会话历史（防止首次访问时 KeyError）
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
 # 显示历史对话
 for msg in st.session_state.messages:
