@@ -2,6 +2,7 @@
 
 基于 Streamlit + LangChain + Chroma 的工业设备维修问答系统，
 支持 PDF 手册知识库检索（RAG）与设备实时状态查询（Function Calling）。
+支持基于前端动态热更新知识库，具备文件防冲突与自动清理机制。
 
 ## 快速开始
 
